@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FreeStream</title>
+  <style>
+    :root { color-scheme: dark; --bg:#0a0a0c; --surface:#141418; --border:#2a2a32; --text:#f5f5f7; --muted:#9a9aa8; --accent:#3b82f6; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui,sans-serif; background:var(--bg); color:var(--text); }
+    header { padding:1rem 1.25rem; display:flex; gap:.75rem; align-items:center; }
+    h1 { margin:0; font-size:1.2rem; }
+    .spacer { flex:1; }
+    button, input, select { font:inherit; background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:.4rem .6rem; }
+    #grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:.75rem; padding:1rem; }
+    .card { background:var(--surface); border:1px solid var(--border); border-radius:8px; overflow:hidden; cursor:pointer; }
+    .card img { width:100%; aspect-ratio:2/3; object-fit:cover; background:#222; display:block; }
+    .card .meta { padding:.5rem; font-size:.8rem; }
+    .badge { font-size:.65rem; opacity:.8; }
+    #status { padding:0 1.25rem; color:var(--muted); font-size:.85rem; }
+    .filters { padding:0 1.25rem 1rem; display:flex; flex-wrap:wrap; gap:.5rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>FreeStream</h1>
+    <div class="spacer"></div>
+    <input id="search" placeholder="Search…" />
+    <select id="type"><option value="ALL">All</option><option value="MOVIE">Movies</option><option value="TV">TV</option></select>
+    <input id="minScore" type="number" min="0" max="10" step="0.5" placeholder="Min IMDb" style="width:5rem" />
+    <input id="minYear" type="number" placeholder="Year" style="width:5rem" />
+    <button id="apply">Apply</button>
+  </header>
+  <div id="status"></div>
+  <div id="grid"></div>
+  <script>
+    const grid = document.getElementById('grid');
+    const status = document.getElementById('status');
+    let page = 1;
+
+    async function loadTitles(reset=true) {
+      if (reset) { page = 1; grid.innerHTML = ''; }
+      const params = new URLSearchParams({ page, page_size: 60, sort: 'imdb_rating', order: 'desc' });
+      const q = document.getElementById('search').value.trim();
+      const type = document.getElementById('type').value;
+      const minScore = document.getElementById('minScore').value;
+      const minYear = document.getElementById('minYear').value;
+      if (q) params.set('search', q);
+      if (type && type !== 'ALL') params.set('type', type);
+      if (minScore) params.set('min_score', minScore);
+      if (minYear) params.set('min_year', minYear);
+      const res = await fetch('/api/titles?' + params);
+      const data = await res.json();
+      status.textContent = data.catalog_ready
+        ? `${data.total} titles · page ${data.page}/${data.pages}`
+        : 'Catalog not ready — run fetch + prepare pipeline';
+      for (const row of data.rows) {
+        const card = document.createElement('div');
+        card.className = 'card';
+        const img = document.createElement('img');
+        img.src = row.poster || row.fallbackImage || '';
+        img.alt = row.title;
+        img.onerror = () => { if (row.fallbackImage && img.src !== row.fallbackImage) img.src = row.fallbackImage; };
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.innerHTML = `<div>${row.title}</div><div class="badge">${row.mediaType} · ${row.imdbRating?.toFixed(1) ?? '—'} · ${row.year ?? ''}</div>`;
+        card.appendChild(img);
+        card.appendChild(meta);
+        grid.appendChild(card);
+      }
+    }
+
+    document.getElementById('apply').onclick = () => loadTitles(true);
+    document.getElementById('search').onkeydown = e => { if (e.key === 'Enter') loadTitles(true); };
+    loadTitles(true);
+  </script>
+</body>
+</html>

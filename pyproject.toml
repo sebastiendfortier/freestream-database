@@ -1,0 +1,47 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "freestream-database"
+version = "0.1.0"
+description = "FreeStream catalog browser and stream launcher"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "httpx>=0.27",
+  "zstandard>=0.22",
+  "polars>=1.0",
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "pywebview>=5.0",
+  "freestream-resolver>=0.1.0",
+]
+
+[project.scripts]
+freestream-database = "desktop.launcher:main"
+
+[dependency-groups]
+dev = ["pyappdist", "pytest"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["desktop"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src" = "src"
+"static" = "static"
+
+[tool.pyappdist]
+name = "FreeStream"
+python = "3.12"
+identifier = "com.freestream.database"
+launchers = [
+  { name = "FreeStream", entry = "desktop.launcher:main", gui = true },
+]
+
+[[tool.pyappdist.targets]]
+name = "windows"
+platform = "windows-x86_64"
+format = "msi"
+manufacturer = "FreeStream"
+scope = "user"

@@ -1,0 +1,26 @@
+[workspace]
+name = "freestream-database"
+version = "0.1.0"
+description = "FreeStream catalog browser and stream launcher"
+channels = ["conda-forge"]
+platforms = ["linux-64", "win-64", "osx-64", "osx-arm64"]
+
+[dependencies]
+python = ">=3.12"
+httpx = "*"
+polars = "*"
+fastapi = "*"
+uvicorn = "*"
+zstandard = "*"
+
+[pypi-dependencies]
+pytest = ">=8.0"
+pywebview = ">=5.0"
+freestream-resolver = { path = "../freestream-resolver", editable = true }
+
+[tasks]
+fetch-tmdb = "python src/fetch_tmdb_catalog.py"
+fetch-imdb = "python src/fetch_imdb_ratings.py"
+prepare = "python src/prepare_view.py"
+serve = "uvicorn src.serve:app --reload --host 127.0.0.1 --port 8000"
+test = "python -m pytest tests/ -q"
