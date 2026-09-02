@@ -25,9 +25,11 @@ LISTS = [
     ("movie", "movie/popular"),
     ("movie", "movie/top_rated"),
     ("movie", "movie/now_playing"),
+    ("movie", "trending/movie/week"),
     ("tv", "tv/popular"),
     ("tv", "tv/top_rated"),
     ("tv", "tv/on_the_air"),
+    ("tv", "trending/tv/week"),
 ]
 
 
