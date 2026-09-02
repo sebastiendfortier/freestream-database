@@ -34,8 +34,9 @@ jobs:
           @"
 
           [tool.uv.sources]
-          freestream-resolver = { path = "freestream-resolver", editable = true }
+          freestream-resolver = { path = "freestream-resolver" }
           "@ | Add-Content -Path pyproject.toml -Encoding utf8
+          uv lock
           uv sync --group dev
 
       - name: Build Windows MSI
