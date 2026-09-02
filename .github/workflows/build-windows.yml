@@ -31,10 +31,15 @@ jobs:
       - name: Install build dependencies
         shell: pwsh
         run: |
+          New-Item -ItemType Directory -Force vendor/wheels | Out-Null
+          uv build freestream-resolver --wheel --out-dir vendor/wheels
+          $wheel = Get-ChildItem vendor/wheels/freestream_resolver*.whl | Select-Object -First 1
+          if (-not $wheel) { throw "freestream-resolver wheel not built" }
+          $wheelRel = "vendor/wheels/$($wheel.Name)"
           @"
 
           [tool.uv.sources]
-          freestream-resolver = { path = "freestream-resolver" }
+          freestream-resolver = { path = "$wheelRel" }
           "@ | Add-Content -Path pyproject.toml -Encoding utf8
           uv lock
           uv sync --group dev
