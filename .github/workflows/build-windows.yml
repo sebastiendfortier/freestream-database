@@ -29,7 +29,9 @@ jobs:
           wix eula accept wix7
 
       - name: Install build dependencies
-        run: uv sync --group dev
+        run: |
+          uv pip install -e freestream-resolver
+          uv sync --group dev
 
       - name: Build Windows MSI
         run: uv run pyappdist build windows
