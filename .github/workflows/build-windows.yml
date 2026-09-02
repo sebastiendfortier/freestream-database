@@ -29,8 +29,13 @@ jobs:
           wix eula accept wix7
 
       - name: Install build dependencies
+        shell: pwsh
         run: |
-          uv pip install -e freestream-resolver
+          @"
+
+          [tool.uv.sources]
+          freestream-resolver = { path = "freestream-resolver", editable = true }
+          "@ | Add-Content -Path pyproject.toml -Encoding utf8
           uv sync --group dev
 
       - name: Build Windows MSI
