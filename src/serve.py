@@ -19,6 +19,7 @@ if str(SRC) not in sys.path:
 
 from app_config import catalog_ready, genre_index_path, static_dir, titles_view_path
 from stream_bridge import play_stream, resolve_title
+from watch_history import list_continue_watching, save_progress
 
 _df: pl.DataFrame | None = None
 _genres: list[str] = []
@@ -208,3 +209,27 @@ def stream_play(body: dict) -> dict:
         provider=body.get("provider") or "",
         source_url=body.get("sourceUrl") or body.get("source_url") or "",
     )
+
+
+@app.get("/api/watch/continue")
+def watch_continue(limit: int = 15) -> dict:
+    rows = list_continue_watching(limit=min(max(1, limit), 50))
+    return {"rows": rows, "count": len(rows)}
+
+
+@app.post("/api/watch/progress")
+def watch_progress(body: dict) -> dict:
+    episode_url = (body.get("episodeUrl") or body.get("episode_url") or "").strip()
+    if not episode_url:
+        return {"ok": False, "error": "Missing episodeUrl"}
+    entry = save_progress(
+        episode_url=episode_url,
+        series_title=(body.get("seriesTitle") or body.get("series_title") or "").strip(),
+        episode_title=(body.get("episodeTitle") or body.get("episode_title") or "").strip(),
+        season_number=str(body.get("seasonNumber") or body.get("season_number") or "1"),
+        episode_number=str(body.get("episodeNumber") or body.get("episode_number") or "1"),
+        poster_url=(body.get("posterUrl") or body.get("poster_url") or "").strip(),
+        position_ms=int(body.get("positionMs") or body.get("position_ms") or 0),
+        duration_ms=int(body.get("durationMs") or body.get("duration_ms") or 0),
+    )
+    return {"ok": True, "entry": entry}

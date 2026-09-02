@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 
 APP_NAME = "FreeStream"
-APP_VERSION = "0.1.0"
+APP_VERSION = "0.3.0"
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _RESOLVER_CONFIG = _REPO_ROOT.parent / "freestream-resolver" / "config" / "tmdb.json"
@@ -38,6 +38,10 @@ def imdb_ratings_path() -> Path:
 
 def genre_index_path() -> Path:
     return data_dir() / "genre_index.json"
+
+
+def watch_history_path() -> Path:
+    return data_dir() / "watch_history.json"
 
 
 def static_dir() -> Path:
