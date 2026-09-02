@@ -44,13 +44,20 @@ def main() -> int:
 
     run_id = str(success["databaseId"])
     try:
-        view = run(["gh", "run", "view", run_id, "--json", "artifacts"])
+        names_json = run(
+            [
+                "gh",
+                "api",
+                f"repos/sebastiendfortier/freestream-database/actions/runs/{run_id}/artifacts",
+                "--jq",
+                ".artifacts[].name",
+            ]
+        )
     except subprocess.CalledProcessError as err:
-        print(f"GH_RUN_VIEW_FAILED:{err}")
+        print(f"GH_ARTIFACTS_FAILED:{err}")
         return 1
 
-    data = json.loads(view)
-    names = [a.get("name", "") for a in data.get("artifacts", [])]
+    names = [line.strip() for line in names_json.splitlines() if line.strip()]
     if ARTIFACT not in names:
         print(f"MSI_ARTIFACT_MISSING:{names}")
         return 1
