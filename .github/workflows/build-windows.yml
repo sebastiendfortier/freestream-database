@@ -28,19 +28,16 @@ jobs:
           echo "$env:USERPROFILE\.dotnet\tools" >> $env:GITHUB_PATH
           wix eula accept wix7
 
+      - name: Vendor freestream-resolver for MSI bundle
+        shell: pwsh
+        run: |
+          Copy-Item -Recurse freestream-resolver/src/freestream_resolver src/freestream_resolver
+
       - name: Install build dependencies
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force vendor/wheels | Out-Null
-          uv build freestream-resolver --wheel --out-dir vendor/wheels
-          $wheel = Get-ChildItem vendor/wheels/freestream_resolver*.whl | Select-Object -First 1
-          if (-not $wheel) { throw "freestream-resolver wheel not built" }
-          $wheelRel = "vendor/wheels/$($wheel.Name)"
-          @"
-
-          [tool.uv.sources]
-          freestream-resolver = { path = "$wheelRel" }
-          "@ | Add-Content -Path pyproject.toml -Encoding utf8
+          $lines = Get-Content pyproject.toml | Where-Object { $_ -notmatch 'freestream-resolver' }
+          Set-Content pyproject.toml $lines
           uv lock
           uv sync --group dev
 
