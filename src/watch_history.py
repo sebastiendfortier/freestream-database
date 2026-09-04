@@ -75,8 +75,33 @@ def save_progress(
     return entry
 
 
+def delete_progress(episode_url: str) -> bool:
+    store = load_store()
+    entries = store.get("entries", {})
+    if episode_url not in entries:
+        return False
+    del entries[episode_url]
+    save_store(store)
+    return True
+
+
 def list_continue_watching(limit: int = 15) -> list[dict[str, Any]]:
     entries = list(load_store()["entries"].values())
     in_progress = [entry for entry in entries if not entry.get("isFinished")]
     in_progress.sort(key=lambda entry: entry.get("lastWatchedTimestamp", 0), reverse=True)
     return in_progress[:limit]
+
+
+def list_series_history(series_title: str) -> list[dict[str, Any]]:
+    title = (series_title or "").strip()
+    entries = [
+        entry
+        for entry in load_store()["entries"].values()
+        if (entry.get("seriesTitle") or "").strip() == title
+    ]
+    entries.sort(key=lambda entry: entry.get("lastWatchedTimestamp", 0), reverse=True)
+    return entries
+
+
+def episode_key(series_title: str, season: int | str, episode: int | str) -> str:
+    return f"freestream://{series_title.strip()}/S{int(season)}E{int(episode)}"

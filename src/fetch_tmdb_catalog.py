@@ -43,15 +43,20 @@ def fetch_page(client: httpx.Client, endpoint: str, page: int) -> list[dict]:
     return resp.json().get("results") or []
 
 
-def external_ids(client: httpx.Client, media_type: str, tmdb_id: int) -> str:
-    path = f"{media_type}/{tmdb_id}/external_ids"
+def fetch_detail(client: httpx.Client, media_type: str, tmdb_id: int) -> dict:
+    """List endpoints omit status; detail (+ external_ids) fills IMDb + status."""
+    path = f"{media_type}/{tmdb_id}"
     resp = client.get(
         f"{TMDB_BASE}{path}",
-        params={"api_key": load_tmdb_api_key()},
+        params={
+            "api_key": load_tmdb_api_key(),
+            "language": "en-US",
+            "append_to_response": "external_ids",
+        },
         timeout=30.0,
     )
     resp.raise_for_status()
-    return (resp.json().get("imdb_id") or "").strip()
+    return resp.json()
 
 
 def row_from_item(item: dict, media_type: str, imdb_id: str) -> dict:
@@ -101,10 +106,15 @@ def fetch_all(max_pages: int = 5) -> pl.DataFrame:
                     if tid in rows:
                         continue
                     try:
-                        imdb = external_ids(client, media_type, tid)
+                        detail = fetch_detail(client, media_type, tid)
+                        imdb = (
+                            (detail.get("external_ids") or {}).get("imdb_id") or ""
+                        ).strip()
+                        merged = {**item, **detail}
                     except httpx.HTTPError:
                         imdb = ""
-                    rows[tid] = row_from_item(item, media_type, imdb)
+                        merged = item
+                    rows[tid] = row_from_item(merged, media_type, imdb)
                     time.sleep(0.05)
                 time.sleep(0.25)
     return pl.DataFrame(list(rows.values())) if rows else pl.DataFrame()
